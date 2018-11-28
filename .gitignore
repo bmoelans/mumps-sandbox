@@ -1,0 +1,6 @@
+# Internal YottaDB directories
+r?*/
+V?*
+
+# OS caching
+.DS_Store
