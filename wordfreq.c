@@ -18,24 +18,19 @@
 #include <string.h>    /* for "strtok" */
 #include <ctype.h>    /* for "toupper" */
 
-/* count and report word frequencies for http://www.cs.duke.edu/csed/code/code2007/ */
-int main() {
-    ydb_buffer_t tmp1, tmp2, index, words, words_tmp1, null;
-    ydb_buffer_t index_subscr[2], value;
-    char tmp1buff[64], tmp2buff[64], valuebuff[64], words_tmp1buff[64], linebuff[1024], *lineptr, *ptr, *tmp_ptr;
+void read_input(char *var_name) {
+    ydb_buffer_t tmp_b, index, words;
+    ydb_buffer_t value;
+    char valuebuff[64], linebuff[1024], *lineptr, *ptr, *tmp_ptr;
     int status;
 
-    /* Initialize all array variable names we are planning to use. Randomly use locals vs globals to store word frequencies. */
-    /* If using globals, delete any previous contents */
-    if (getpid() % 2) {
-        YDB_LITERAL_TO_BUFFER("words", &words);
-        YDB_LITERAL_TO_BUFFER("index", &index);
-    } else {
-        YDB_LITERAL_TO_BUFFER("^words", &words);
+    (&words)->buf_addr = var_name;
+    (&words)->len_used = (&words)->len_alloc = strlen(var_name);
+    if (var_name[0] == '^') {
         ydb_delete_s(&words, 0, NULL, YDB_DEL_TREE);
-        YDB_LITERAL_TO_BUFFER("^index", &index);
-        ydb_delete_s(&index, 0, NULL, YDB_DEL_TREE);
     }
+
+    ydb_delete_s(&index, 0, NULL, YDB_DEL_TREE);
     value.buf_addr = &valuebuff[0];
     value.len_used = 0;
     value.len_alloc = sizeof(valuebuff);
@@ -51,18 +46,40 @@ int main() {
                 tmp_ptr++;
             }
             /* */
-            tmp1.buf_addr = ptr;
-            tmp1.len_used = tmp_ptr - ptr;
+            tmp_b.buf_addr = ptr;
+            tmp_b.len_used = tmp_ptr - ptr;
             if (tmp_ptr[-1] == '\n')
-                tmp1.len_used--;    /* - 1 to remove trailing newline */
-            if (tmp1.len_used) {
-                tmp1.len_alloc = tmp1.len_used;
-                status = ydb_incr_s(&words, 1, &tmp1, NULL, &value);    /* M line : set value=$incr(words(tmp1)) */
+                tmp_b.len_used--;    /* - 1 to remove trailing newline */
+            if (tmp_b.len_used) {
+                tmp_b.len_alloc = tmp_b.len_used;
+                status = ydb_incr_s(&words, 1, &tmp_b, NULL, &value);    /* M line : set value=$incr(words(tmp1)) */
                 YDB_ASSERT(YDB_OK == status);
             }
             ptr = strtok(NULL, " ");
         }
     } while (1);
+}
+
+/* count and report word frequencies for http://www.cs.duke.edu/csed/code/code2007/ */
+int main() {
+    char *var_name;
+    var_name = malloc(10 * sizeof(char));
+    if (1) {
+        strcpy(var_name, "words");
+    } else {
+        strcpy(var_name, "^words");
+    }
+
+    ydb_buffer_t tmp1, tmp2, index, words, words_tmp1, null;
+    ydb_buffer_t index_subscr[2];
+    char tmp1buff[64], tmp2buff[64], words_tmp1buff[64];
+    int status;
+
+    read_input(var_name);
+    (&words)->buf_addr = var_name;
+    (&words)->len_used = (&words)->len_alloc = strlen(var_name);
+
+    YDB_LITERAL_TO_BUFFER("index", &index);
     tmp1.buf_addr = tmp1buff;            /* M line : set tmp1="" */
     tmp1.len_used = 0;
     tmp1.len_alloc = sizeof(tmp1buff);
@@ -109,5 +126,6 @@ int main() {
             index_subscr[1] = tmp2;
         } while (1);
     } while (1);
+    free(var_name);
     return YDB_OK;
 }
