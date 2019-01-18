@@ -18,12 +18,21 @@
 #include <string.h>    /* for "strtok" */
 #include <ctype.h>    /* for "toupper" */
 
-/* Macro to create/fill-in a ydb_buffer_t structure from ydb_string_t
+/**
+ * Macro to create/fill-in a ydb_buffer_t structure from ydb_string_t
  */
 #define YDB_STRING_TO_BUFFER(STRING, BUFFERP)					\
 {										\
 	(BUFFERP)->buf_addr = (STRING)->address;						\
 	(BUFFERP)->len_used = (BUFFERP)->len_alloc = (STRING)->length;	\
+}
+
+/**
+ * Test function to test interaction Mumps to C
+ */
+ydb_status_t len(const int argc, ydb_long_t *length, const ydb_string_t *s) {
+    *length = s->length;
+    return YDB_OK;
 }
 
 void read_input(ydb_string_t *var_name) {
@@ -67,7 +76,7 @@ void read_input(ydb_string_t *var_name) {
     } while (1);
 }
 
-ydb_status_t create_word_index(ydb_string_t *var_name, ydb_string_t *index_name) {
+ydb_status_t create_word_index(const int argc, ydb_string_t *var_name, ydb_string_t *index_name) {
     ydb_buffer_t tmp_b, index, words, words_tmp1, null;
     ydb_buffer_t index_subscr[2];
     char tmp1buff[64], words_tmp1buff[64];
@@ -78,7 +87,7 @@ ydb_status_t create_word_index(ydb_string_t *var_name, ydb_string_t *index_name)
     tmp_b.buf_addr = tmp1buff;            /* M line : set tmp1="" */
     tmp_b.len_used = 0;
     tmp_b.len_alloc = sizeof(tmp1buff);
-    words_tmp1.buf_addr = &words_tmp1buff[0];
+    words_tmp1.buf_addr = words_tmp1buff;
     words_tmp1.len_used = 0;
     words_tmp1.len_alloc = sizeof(words_tmp1buff);
     null.buf_addr = NULL;
@@ -128,7 +137,7 @@ int main() {
     YDB_STRING_TO_BUFFER(var_name, &words);
     YDB_STRING_TO_BUFFER(index_name, &index);
 
-    create_word_index(var_name, index_name);
+    create_word_index(2, var_name, index_name);
 
     tmp1.buf_addr = tmp1buff;            /* M line : set tmp1="" */
     tmp1.len_used = 0;
