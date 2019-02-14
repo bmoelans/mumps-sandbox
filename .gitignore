@@ -2,8 +2,14 @@
 r?*/
 V?*
 
+# Build files
+/wordfreq
+cmake*
+lib*.h
+
 # tmp files
 *.DMP
 
 # OS caching
 .DS_Store
+.idea
